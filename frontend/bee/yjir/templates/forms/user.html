@@ -1,0 +1,32 @@
+{% extends "layouts/common.html" %}
+
+{% block content %}
+<form action="{{ form_action }}" method="post" target="_top">
+	<h1>
+		{% if action %}Edit{% else %}Add{% endif %} a User
+	</h1>
+	
+	<div>
+		<label for="fm-name">Name</label>
+		<input id="fm-name" type="text" name="name"{% if user %} value="{{ user.name }}"{% endif %}>
+	</div>
+	
+	<div>
+		<label for="fm-phone-number">Phone Number</label>
+		<input id="fm-phone-number" type="text" name="phone_number"{% if user %} value="{{ user.phone_number }}"{% endif %}>
+	</div>
+	
+	<div>
+		<label for="fm-email-address">Email Address</label>
+		<input id="fm-email-address" type="text" name="email_address"{% if user %} value="{{ user.email_address }}"{% endif %}>
+	</div>
+	
+	<div class="submit">
+		<input type="submit" name="submit" value="Submit">
+		<input type="submit" name="delete" value="Delete">
+		<input type="submit" value="Cancel">
+		<div class="clear-hack"></div>
+	</div>
+</form>
+{% endblock %}
+

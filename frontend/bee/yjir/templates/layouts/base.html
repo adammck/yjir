@@ -1,0 +1,28 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN"
+  "http://www.w3.org/TR/html4/strict.dtd">
+
+<html>
+	<head>
+		<title></title>
+		<style type="text/css">
+			@import "/static/css/base.css";
+			@import "/static/css/yjir.css";
+		</style>
+		<script type="text/javascript" src="/static/js/mootools-1.2-core-yc.js"></script>
+		<script type="text/javascript" src="/static/js/clientside-trunk-517.js"></script>
+		<script type="text/javascript" src="/static/js/yjir.js"></script>
+	</head>
+	<body>
+		<!-- to target IE without hacks -->
+		<!--[if IE]><div id="IE"><![endif]-->
+		
+		<div id="wrapper">
+			{% block body %}{% endblock %}
+			<div class="clear-hack"></div>
+		</div>
+		
+		<!-- end of IE hack hook -->
+		<!--[if IE]></div><![endif]-->
+	</body>
+</html>
+

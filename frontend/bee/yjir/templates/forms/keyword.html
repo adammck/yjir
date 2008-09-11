@@ -1,0 +1,21 @@
+{% extends "layouts/common.html" %}
+
+{% block content %}
+<form action="" method="post" autocomplete="off">
+	<h1>{% if instance %}Edit{% else %}Add{% endif %} a Keyword</h1>{% for field in form %}
+	
+	<div>
+		{{ field.label_tag }}
+		{{ field }}
+		{% if field.errors %}{{ field.errors }}{% endif %}
+	</div>{% endfor %}
+	
+	<div class="submit">
+		<input type="submit" name="submit" value="Submit">
+		{% if instance %}<input type="submit" name="delete" value="Delete">{% endif %}
+		<input type="submit" value="Cancel">
+		<div class="clear-hack"></div>
+	</div>
+</form>
+{% endblock %}
+

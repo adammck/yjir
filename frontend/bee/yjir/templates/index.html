@@ -1,0 +1,141 @@
+{% extends "layouts/common.html" %}
+
+{% block content %}
+<div id="columns">
+	<div class="column scopes">
+		<div class="col-hack">
+			<h2>Scopes</h2>
+			<div class="add"><a href="/yjir/add" title="Add a Scope" accesskey="s">Add</a></div>
+			
+			{# are there any scopes to display? #}
+			{% if scopes %}
+				<ul id="scopes">
+					
+					{# list all scopes (they're the top-level of naviation, so no parents) #}
+					{% for scope in scopes %}
+						{% ifequal this_scope scope %}
+						
+							{# this scope is currently selected, so highlight it and show the edit link #}
+							<li class="active">
+								<a href="/yjir/{{ scope.name }}/edit" class="edit">Rename or Delete</a>
+								<a href="/yjir/{{ scope.name }}">{{ scope.name }}</a>
+							</li>
+							
+						{% else %}
+							<li><a href="/yjir/{{ scope.name }}">{{ scope.name }}</a></li>
+						{% endifequal %}
+					{% endfor %}
+				</ul>
+				
+			{% else %}
+				{# no scopes in the database... this is a very rare occurance! #}
+				<div class="notice">
+					<p>(<a href="/yjir/add" title="Add a Scope">add a scope</a>)</p>
+				</div>
+			{% endif %}
+		</div>
+	</div>
+	
+	
+	
+	
+	<div class="column keywords">
+		<div class="col-hack">
+			<h2>Keywords</h2>
+			
+			{% if this_scope %}
+				{# only show the add-keyword link once a scope has been selected #}
+				<div class="add">
+					<a href="/yjir/{{ this_scope.name }}/add" title="Add a Keyword" accesskey="k">Add</a>
+				</div>
+				
+				{# are there any keywords to display? #}
+				{% if keywords %}
+					<ul id="keywords">
+						
+						{# list all keywords in this scope #}
+						{% for keyword in keywords %}
+							{% ifequal this_keyword keyword %}
+							
+								{# this keyword is selected, so highlight and show the edit link #}
+								<li class="active">
+									<a href="/yjir/{{ this_scope.name }}/{{ keyword.name }}/edit" class="edit">Rename or Delete</a>
+									<a href="/yjir/{{ this_scope.name }}/{{ keyword.name }}">{{ keyword.name }}</a>
+								</li>
+							
+							{% else %}
+								<li><a href="/yjir/{{ this_scope.name }}/{{ keyword.name }}">{{ keyword.name }}</a></li>
+							{% endifequal %}
+						{% endfor %}
+					</ul>
+				{% else %}
+					
+					{# we have selected a scope, but there are no keywords in it #}
+					<div class="notice">
+						<p>
+							(<a href="/yjir/{{ this_scope.name }}/add" title="Add a Keyword">add a keyword</a>)
+						</p>
+					</div>
+				{% endif %}
+			{% else %}
+			
+				{# no scope selected yet #}
+				<div class="notice">
+					<p>(pick a scope)</p>
+				</div>
+			{% endif %}
+		</div>
+	</div>
+	
+	
+	
+	
+	<div class="column actions">
+		<div class="col-hack">
+			<h2>Actions</h2>
+			
+			{# #}
+			{% if this_keyword %}
+				<div class="add">
+					<a href="/yjir/{{ this_scope.name }}/{{ this_keyword.name }}/add" title="Add an Action" accesskey="a">Add</a>
+				</div>
+				
+				{# are there any actions to display? #}
+				{% if actions %}
+					<ul id="actions">
+						
+						{# list all actions in this keyword. there is no "active" state for actions #}
+						{% for action in actions %}
+							<li>
+								<a href="/yjir/{{ this_scope.name }}/{{ this_keyword.name }}/{{ action.pk }}/edit">
+									{{ action }}
+									<span class="more">{{ action.payload|truncatewords:5 }}</span>
+								</a>
+							</li>
+						{% endfor %}
+					
+					</ul>
+				{% else %}
+				
+					{# got a keyword, but there are no actions in it #}
+					<div class="notice">
+						<p>
+							(<a href="/yjir/{{ this_scope.name }}/{{ this_keyword.name }}/add" title="Add an Action">add an action</a>)
+						</p>
+					</div>
+				{% endif %}
+			{% else %}
+				
+				{# no keyword selected yet #}
+				<div class="notice">
+					<p>(pick a keyword)</p>
+				</div>
+			{% endif %}
+		</div>
+	</div>
+</div>
+
+{# ie6 needs a bit (okay, a lot) of help to make this layout work #}
+{#[if IE 6]><scriptx type="text/javascript" src="/static/js/fix-layout-ie6.js"></script><![endif]#}
+{% endblock %}
+

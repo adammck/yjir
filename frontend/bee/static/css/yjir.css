@@ -1,0 +1,387 @@
+/* Adam's fancy development stylesheet
+ * vim:set noet:
+ * --
+ * Enter excuses for wasting time on this...
+ * here. Also, half-assed justifications */
+
+
+
+
+/* some elements are hidden as default when
+ * javascript is enabled (ths "js" class is
+ * added by yjir.js), because their visibility
+ * is controlled by events */
+html.js div.with-js-hide {
+	display: none;
+}
+
+
+
+
+/* when we're loading in a frame, display
+ * a bare-bones version ofthe page */
+.framed #header,
+.framed #footer {
+	display: none;
+}
+
+.framed body {
+	background: #eee;
+}
+
+
+
+
+#header {
+	font-family: monospace;
+	background: #fff url("/static/png/header.png") repeat-x 0 100%;
+}
+
+	#header .ie-hack {
+		overflow: hidden;
+		height: 4em;
+	}
+
+		#header h1 {
+			float: left;
+			font-size: 200%;
+			padding: 0.5em;
+			line-height: 1;
+		}
+
+		#header p {
+			float: left;
+			line-height: 4em;
+			margin: 0;
+		}
+		
+		#header a {
+			color: #000; }
+
+
+
+
+#columns { }
+	
+	/* three equal-width
+	 * full-height columns */
+	.column {
+		position: absolute;
+		bottom: 2em;
+		top: 5em;
+	}
+	
+	/* the middle column is slightly wider,
+	 * to equal exactly 100% width */
+	.column.scopes   { left: 0;   width: 33%; }
+	.column.keywords { left: 33%; width: 34%; }
+	.column.actions  { left: 67%; width: 33%; }
+	
+	/* users have been promoted to their
+	 * own page, so occupy the full width
+	 * -- the columns aren't removed all-
+	 * together, to keep the css simpler */
+	.column.users {
+		width: 100%; }
+	
+
+		.col-hack {
+			position: relative;
+			height: 100%;
+		}
+			
+			/* space out the columns, but don't double-up
+			 * the margin on adjacents. this method means
+			 * that the middle column (keywords) is just
+			 * slightly (1em) than the other two */
+			.column          .col-hack { margin: 0 1em; }
+			.column.keywords .col-hack { margin: 0; }
+			
+			
+			
+			/* the always-present label of this
+			 * column ("Scopes", "Keywords", etc)
+			 * (also the "ADD" link, which sits
+			 * on the right of the title */
+			.column h2, .column div.add {
+				line-height: 1.875;
+				font-size: 160%;
+			}
+			
+				.column h2 {
+					color: #000;
+					background: #ddd;
+					padding-left: 0.3125em;
+				}
+			
+				.column div.add {
+					position: absolute;
+					display: block;
+					top: 0;
+					right: 0;
+					width: 10em;
+					text-align: right;
+				}
+			
+				.column div.add a {
+					background: #ccc;
+					line-height: 1.875;
+					display: block;
+					float: right;
+					padding: 0 0.5em;
+					color: #000;
+				}
+			
+			/* the list of items, absolutely
+			 * positioned (relative to .col-hack),
+			 * to fill the window height */
+			.column ul {
+				position: absolute;
+				top: 4em;
+				left: 0;
+				width: 100%;
+				bottom: 0em;
+				
+				margin: 0;
+				overflow: auto;
+				overflow-x: hidden;
+				background: #fff;
+			}
+			
+				#IE .column ul,
+				#IE .column div.notice {
+					/* IE doesn't like flexible heights, so we must
+					 * absolutely specify it with an ugly expression.
+					 * thankfully, we can use mootools here! */
+					height: expression(
+						window.MooTools ? $("footer").getTop() - $(this).getTop() : 0
+					);
+				}
+				
+				/* each item's container */
+				.column li {
+					position: relative;
+				}
+				
+					/* each item */
+					.column li a {
+						display: block;
+						line-height: 2;
+						padding: 0 0.5em;
+						border-top: 1px dotted #eee;
+						color: #000;
+					}
+				
+						/* the border separates items, so
+						 * looks rather ugly on the first */
+						.column li:first-child a,
+						.column li:first-child form {
+							border-top: 0; }
+						
+						/* simulate the same behavior in IE, using another proprietary blob
+						 * (IE6 doesn't support "dotted", so make it "solid" and lighten it
+						 * up a little to aproximate the effect) */
+						#IE .column ul li a {
+							border-top-color: #f4f4f4;
+							border-top-style: expression(
+								window.MooTools && ($(this).getParent().getPrevious() == null) ? "none" : "solid"
+							);
+						}
+						
+						/* more information about this link
+						 * -- a little summary of the contents */
+						.column li a span.more {
+							color: #eee; }
+					
+					/* the "edit this scope" link, which is only
+					 * added to the active scope/keyword/action */
+					#columns .column li a.edit {
+						position: absolute;
+						background: none !important;
+						top: 0;
+						right: 20px;
+						padding: 0;
+						padding-right: 0.625em;
+						border: 0;
+						font-size: 80%;
+						line-height: 2.5;
+						color: #cc8;
+					}
+					
+						/* re-add hover underline (removed
+						 * below by .column ul a:hover) to
+						 * make the add link behave normally */
+						#columns .column li a.edit:hover {
+							text-decoration: underline; }
+					
+					/* an "active" link takes precidence over hover */
+					.column ul li.active a { background: #ff8 url("/static/png/go-next.png") no-repeat 100% 50% !important; }
+					.column ul a:hover     { background: #ffd; text-decoration: none; }
+			
+			/* the "pick a {obj}" message, when
+			 * a panel can't be displayed yet */
+			.column div.notice {
+				position: absolute;
+				top: 4em;
+				left: 0;
+				width: 100%;
+				bottom: 0;
+				background: #f4f4f4;
+				text-align: center;
+				overflow: hidden;
+			}
+			
+				/* the help text displayed
+				 * when no items are listed */
+				.column div.notice p {
+					padding-top: 5em;
+					margin: 0;
+					color: #aaa;
+				}
+				
+				/* links are kind of hidden, but
+				   working,  */
+				.column div.notice a {
+					color: #aaa; }
+
+
+
+
+form {
+	padding: 1em;
+}
+
+	form h1 {
+		padding: 0 0.3125em;
+		line-height: 1.875;
+		color: #000;
+		font-size: 160%;
+		background: #ddd;
+		
+		/* 1em (same as everywhere else)
+		 * in conjunction with form div */
+		margin-bottom: 0.3125em;
+	}
+	
+		/* for highlighting bits of important
+		 * information (where we're adding
+		 * objects to, in this case) */
+		 form h1 span {
+		 	text-transform: uppercase;
+		 }
+	
+	form label {
+		display: block;
+		float: left;
+		width: 9em;
+		padding-right: 1em;
+		text-align: right;
+		margin-top: 0.4em;
+	}
+	
+		/* for small notes inside labels,
+		 * to clarify my bad instructions */
+		form label span {
+			display: block;
+			font-size: 80%;
+			line-height: 1.25;
+			margin-top: 0.5em;
+			color: #aaa;
+		}
+	
+	form input, form select, form textarea {
+		margin-right: 0.5em;
+		float: left;
+	}
+	
+		/* align the submit button(s) with
+		 * the fields, and space them out */
+		form div.submit {
+			padding-top: 0.5em;
+			padding-left: 10em;
+		}
+		
+			form div.submit input {
+				margin-right: 0.5em; }
+	
+	/* each form field, and the submit
+	 * buttons, have their own div */
+	form div {
+		padding-top: 0.5em;
+		clear: both;
+	}
+	
+		/* validation errors */
+		form div ul.errorlist {
+			margin: 0.25em 0 0 1em;
+			float: left;
+		}
+		
+			form div ul.errorlist li {
+				list-style: disc;
+				color: #c00;
+			}
+
+
+
+
+div.message {
+	padding: 1em;
+}
+
+	div.message p {
+		margin: 0;
+	}
+	
+	div.message p.msg {
+		font-size: 200%;
+		color: #444;
+	}
+	
+	div.message p.continue a {
+		margin-top: 1em;
+		text-align: right;
+		background: #ddd;
+		display: block;
+		padding: 0.5em;
+		color: #000;
+	}
+
+
+/* if we have javascript support, then the
+ * add/edit forms are loaded in a lightbox */
+iframe.dialog {
+	width: 40em;
+	height: 20em;
+	border: 1px solid #ddd;
+	overflow: hidden;
+}
+	
+	/* while loading, do not display the
+	 * dialog - it's a confusing empty box */
+	iframe.dialog.loading {
+		visibility: hidden; }
+
+
+
+
+#footer {
+	position: absolute;
+	left: 0; width: 100%;
+	bottom: 0; height: 2em;
+	overflow: hidden;
+}
+
+	#footer p {
+		font-size: 80%;
+		line-height: 2.5;
+		letter-spacing: 2px;
+		padding-right: 1.25em;
+		text-align: right;
+		color: #aaa;
+		margin: 0;
+	}
+	
+		#footer p a {
+			color: #888; }
+
