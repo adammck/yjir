@@ -2,62 +2,67 @@
 
 {% block content %}
 <form action="" method="post" autocomplete="off">
-	<h1>{% if instance %}Edit{% else %}Add{% endif %} an Action</h1>
+	<h1>{% if instance %}Edit{% else %}Add{% endif %} an Action</h1>{% for field in form %}
 	
-	<div>{% with form.keyword as field %}
+	<div id="{{ field.name }}">
 		{{ field.label_tag }}
-		{{ field }}{% if field.errors %}
-		{{ field.errors }}{% endif %}{% endwith %}
+		{{ field }}
+		{% if field.errors %}{{ field.errors }}{% endif %}
+	</div>{% endfor %}
+	
+	<div class="with-js-hide">
+		<label>Other Recipients</label>
+		<div id="recipients">{% for recipient in recipients %}
+			<div class="with-js-hide">
+				<select name="recip_type_{{ forloop.counter }}">
+					<option>SMS</option>
+					<option>Phone Call</option>
+					<option>Email</option>
+				</select>
+				<input type="text" name="recip_dest_{{ forloop.counter }}" />
+			</div>{% endfor %}
+		</div>
 	</div>
 	
-	
-	<div>{% with form.bearer_type as field %}
-		{{ field.label_tag }}
-		
-		<select id="id_bearer_type" name="bearer_type">
-			<option value="sms"{% if instance %}{% ifequal instance.bearer_type "sms" %} selected="selected"{% endifequal %}{% else %} selected="selected"{% endif %}>SMS</option>
-			<option value="ivr"{% ifequal instance.bearer_type "ivr" %} selected="selected"{% endifequal %}>Phone Call</option>
-			<option value="shell"{% ifequal instance.bearer_type "shell" %} selected="selected"{% endifequal %}>Shell Script</option>
-			<option value="email"{% ifequal instance.bearer_type "email" %} selected="selected"{% endifequal %}>Email</option>
-		</select>{% if field.errors %}
-		
-		{{ field.errors }}{% endif %}{% endwith %}
-	</div>
-	
-	
-	<div>{% with form.reply_to_sender as field %}
-		<label for="id_reply_to_sender">Reply To</label>
-		
-		<select id="id_reply_to_sender" name="reply_to_sender">
-			<option value="true"{% if instance %}{% if instance.reply_to_sender %} selected="selected"{% endif %}{% else %} selected="selected"{% endif %}>Sender</option>
-			<option value="false"{% if instance %}{% if not instance.reply_to_sender %} selected="selected"{% endif %}{% endif %}>Other(s)</option>
-		</select>{% if field.errors %}
-		
-		{{ field.errors }}{% endif %}{% endwith %}
-	</div>
-	
-	
-	<div class="with-js-hide" id="dests">{% with form.destinations as field %}
-		<label for="id_destinations">
-			Other(s)
-			<span>One Per Line</span>
-		</label>
-		<textarea id="id_destinations" type="text" name="destinations" cols="24" rows="3">{{ instance.destinations }}</textarea>{% if field.errors %}
-		
-		{{ field.errors }}{% endif %}{% endwith %}
-	</div>
-	
-	
-	<div>{% with form.payload as field %}
-		<label for="id_payload">
-			Message
-			<span>180 Characters Remaining</span>
-		</label>
-		<textarea id="id_payload" name="payload" cols="36" rows="6">{% if instance %}{{ instance.payload }}{% endif %}</textarea>{% if field.errors %}
-		
-		{{ field.errors }}{% endif %}{% endwith %}
-	</div>
-	
+	<script type="text/javascript">
+		window.addEvent ("domready", function() {
+			
+			/* create a button to add another recipient field
+			 * via javascript (rather than in the tmpl), because
+			 * its dependant on JS. if JS is disabled, all of
+			 * the recipient fields are displayed */
+			var others = new Element("input", {
+				"type": "button",
+				"value": "Add Recipient",
+				"events": {
+					"click": function() {
+						/* make sure the recipients group is visible */
+						$("recipients").getParent().removeClass("with-js-hide");
+						
+						/* reveal the next type/destination pair, if any
+						 * remain hidden */
+						var divs = $$("#recipients div.with-js-hide");
+						if (divs.length) divs[0].removeClass("with-js-hide");
+						
+						/* fire resize in case we're in a
+						 * lightbox which needs to rejig */
+						window.fireEvent("resize");
+					}
+				},
+				"styles": {
+					"position": "absolute",
+					"left": "-9999px"
+				}
+			}).inject("reply_via");
+			
+			/* position the recipients button just above
+			 * the payload txta, to keep it out the way */
+			window.addEvent ("resize", function() {
+				var coords = $("id_payload").getCoordinates();
+				others.setStyle("left", (coords.left + coords.width) - others.getSize().x);
+			}).fireEvent("resize");
+		});
+	</script>
 	
 	<div class="submit">
 		<input type="submit" name="submit" value="Submit">
@@ -65,28 +70,6 @@
 		<input type="submit" value="Cancel">
 		<div class="clear-hack"></div>
 	</div>
-	
-	
-	<script type="text/javascript">
-		window.addEvent ("domready", function() {
-		
-			/* if we are not replying to sender,
-			 * then show the "destinations" field
-			 * to enter some other phone numbers */
-			var rep = $("id_reply_to_sender");
-			rep.addEvent ("change", function () {
-				var vis = (rep.value == "false") ? "block": "none";
-				$("dests").setStyle ("display", vis);
-				
-				/* the window might have changed size...
-				 * why isn't this fired by the browser? */
-				window.fireEvent("resize");
-			});
-			
-			/* initialize visibility */
-			rep.fireEvent("change");
-		});
-	</script>
 </form>
 {% endblock %}
 

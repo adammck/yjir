@@ -5,5 +5,12 @@
 	<p class="msg">{{ msg }}</p>
 	<p class="continue"><a href="{{ link }}" target="_top">Continue &raquo;</a></p>
 </div>
+
+<script type="text/javascript">
+	window.addEvent ("domready", function() {
+		var link = $$("p.continue a");
+		if(link.length) link[0].focus();
+	});
+</script>
 {% endblock %}
 

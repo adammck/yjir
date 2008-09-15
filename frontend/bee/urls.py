@@ -4,7 +4,7 @@ from django.conf import settings
 
 urlpatterns = patterns("",
 	(r'^$', redirect_to, {"url": "/yjir/"}),
-    (r'^yjir/', include("bee.yjir.urls")),
+	(r'^yjir/', include("bee.yjir.urls")),
 )
 
 # only serve static files in debug mode,
@@ -14,7 +14,7 @@ if settings.DEBUG:
 	urlpatterns += patterns("",
 		(r'^static/(?P<path>.*)$',
 		"django.views.static.serve",
-#		{"document_root": "/home/adammck/Projects/Unicef/bee/static"})
-		{"document_root": "/home/adam/yjir2/bee/static"})
+		{"document_root": "/home/adammck/Projects/Unicef/yjir/frontend/bee/static"})
+#		{"document_root": "/home/adam/yjir2/bee/static"})
 	)
 

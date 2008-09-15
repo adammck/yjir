@@ -5,11 +5,6 @@ from bee.yjir.models import *
 from bee.yjir.views import *
 
 urlpatterns = patterns("",
-    
-	# users
-	(r'^users/$', view_users),
-	(r'^users/add$', add_user),
-	(r'^users/(?P<user_id>\w+)/edit$', edit_user),
 	
     # scopes
     url(r'^add$',                      add_scope,  name="add-scope"),

@@ -1,16 +1,20 @@
 from django.db import models
 
-MAX_LENGTH = 30
 
-BEARERS = (
-	("sms",   "SMS"),
-	("ivr",   "Phone Call"),
-	("email", "Email"),
+MAX_TOKEN_LENGTH = 10
+
+REPLY_VIA = (
+	("",    "None"),
+	("sms", "SMS"),
+	("ivr", "Phone Call"))
+
+PROXYS = (
+	("", "None"),
 	("shell", "Shell Script"))
 
 
 class Scope(models.Model):
-	name = models.CharField(max_length=MAX_LENGTH, unique=True)
+	name = models.CharField(max_length=MAX_TOKEN_LENGTH, unique=True)
 	
 	def __unicode__(self):
 		return self.name
@@ -23,11 +27,13 @@ class Scope(models.Model):
 
 class Keyword(models.Model):
 	scope = models.ForeignKey(Scope)
-	name = models.CharField(max_length=MAX_LENGTH)
+	name = models.CharField(max_length=MAX_TOKEN_LENGTH)
 	unique_together = ("scope", "name")
 	
+	# always include the parent scope in the keywords string
+	# summary, because keywords are useless without their scopes
 	def __unicode__(self):
-		return "%s:%s" % (self.scope.name, self.name)
+		return "%s %s" % (self.scope.name, self.name)
 	
 	# to view this keyword, we must also include
 	# the scope name - they're only unique together,
@@ -37,43 +43,32 @@ class Keyword(models.Model):
 		return ("view-keyword", [self.scope.name, self.name])
 
 
-class Destination(models.Model):
-	name = models.CharField(max_length=MAX_LENGTH)
-	#phone_number = models.PhoneNumberField()
-	phone_number = models.CharField(max_length=30)
-	email_address = models.EmailField()
-	
-	def get_something(self):
-		return self._s
-	
-	def set_something(self,val):
-		self._s = val
-
-
-
-
 class Action(models.Model):
 	keyword = models.ForeignKey(Keyword)
-	bearer_type = models.CharField("Type", max_length=5, choices=BEARERS)
-	reply_to_sender = models.BooleanField()
-	destinations = models.TextField("Other Destinations", blank=True)
+	#proxy = models.CharField(max_length=10, choices=PROXYS, default="")
+	reply_via = models.CharField(max_length=5, choices=REPLY_VIA, default="sms")
 	payload = models.TextField("Message")
 	
 	def __unicode__(self):
-		btd = "%s to " % (self.get_bearer_type_display())
-		
-		if self.reply_to_sender:
-			return btd + "Sender"
+		if self.reply_via != "":
+			return self.get_reply_via_display() + " to Sender"
 		
 		else:
 			# list all destinations as a comma-separated
 			# string, rather than \n as they are stored
-			d = self.destinations.splitlines()
-			return btd + ", ".join(d)
+			dests = self.destination_set.all()
+			dests = ["%s to %s" % (d.type, d.dest) for d in dests]
+			return btd + ", ".join(dests)
 	
 	# like Keyword, we must include other
 	# names in this url, to be RESTful
 	@models.permalink
 	def get_absolute_url(self):
 		return ("view-action", [self.keyword.scope.name, self.keyword.name, self.pk])
+
+
+class Destination(models.Model):
+	action = models.ForeignKey(Action)
+	type = models.CharField(max_length=5)
+	dest = models.CharField(max_length=30)
 

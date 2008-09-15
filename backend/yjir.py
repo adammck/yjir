@@ -9,7 +9,7 @@ import mobiled
 # during dev, patch the python path
 # to include the parent dir, which
 # includes the "bee" django app
-sys.path.append("../")
+sys.path.append("../frontend")
 
 
 # do the minimum possible work to
@@ -51,28 +51,23 @@ class RequestHandler(mobiled.application.SMSHandler):
 			print "!! No actions"
 			return False
 		
+		# temporarily, we are only replying,
+		# and ignoring other recipients
+		dests = [callerID]
 		
 		# otherwise, iterate them, and pass
 		# each one to the appropriate handler
 		for act in acts:
-		
-			# pre-prepare the destinations list, since
-			# it is the same for each type of action
-			dests = act.destinations.splitlines()
-			if act.reply_to_sender:
-				dests.append(callerID)
 			
 			# always use the same arguments
 			args = [callerID, act, dests, node]
-			bt = act.bearer_type
+			bt = act.reply_via
 			
 			# delegate each type of action to an
 			# instance method, or log an error
-			if   bt == 'sms':   self.doSMS(*args)
-			elif bt == 'email': self.doEmail(*args)
-			elif bt == 'ivr':   self.doIVR(*args)
-			elif bt == 'shell': self.doShell(*args)
-			else:               print "!! Unknown Bearer Type: %s" %(bt)
+			if   bt == 'sms': self.doSMS(*args)
+			elif bt == 'ivr': self.doIVR(*args)
+			else:             print "!! Unknown Bearer Type: %s" %(bt)
 			
 		# divide up the log
 		print "--"
@@ -96,11 +91,6 @@ class RequestHandler(mobiled.application.SMSHandler):
 	
 	def doEmail(self, callerID, act, dests, node):
 		
-		# emailing a reply to the sender doesn't even
-		# make sense. the UI should prevent it happening
-		if act.reply_to_sender:
-			return False
-		
 		# send a separate email to each destination
 		for dest in dests:
 			print ">> Email to \"%s\": %s"\
@@ -113,8 +103,28 @@ class RequestHandler(mobiled.application.SMSHandler):
 	
 	
 	def doIVR(self, callerID, act, dests, node):
-		pass
-	
+		dialer = mobiled.ivr.IVRDialer(node)
+		
+		# call each destination in order
+		for dest in dests:
+			print ">> Calling \"%s\": %s"\
+			      % (dest, act.payload)
+			
+			# dial the recipient, and
+			# wait for them to answer
+			ivr = dialer.dial(dest)
+			ivr.answer()
+			
+			# say the introduction and payload
+			ivr.say("Welcome to Why Jure")
+			ivr.getInput(1000)
+			ivr.say(act.payload)
+			
+			# outro, and hang up
+			ivr.getInput(2000)
+			ivr.say("Toodles")
+			ivr.hangup()
+
 	
 	def doShell(self, callerID, act, dests, node):
 		
@@ -146,8 +156,16 @@ class RequestHandler(mobiled.application.SMSHandler):
 # create the mobiled node, using the general handler
 node = mobiled.Mobiled(settings.MOBILED_UDP_PORT)
 
-#node.setupIVRGeneral(fastAGIPort=settings.ASTERISK_FASTAGI_PORT, defaultTTS=settings.ASTERISK_DEFAULT_TTS)
-#node.setupIVROutgoing(asteriskManAPIHost=settings.ASTERISK_SERVER, asteriskManAPIPort=settings.ASTERISK_MANAPI_PORT, asteriskManAPIChannels=settings.ASTERISK_CHANNELS, asteriskManAPIUsername=settings.ASTERISK_MANAPI_USERNAME, asteriskManAPIPassword=settings.ASTERISK_MANAPI_PASSWORD)
+node.setupIVRGeneral(
+	fastAGIPort=settings.ASTERISK_FASTAGI_PORT,
+	defaultTTS=settings.ASTERISK_DEFAULT_TTS)
+
+node.setupIVROutgoing(
+	asteriskManAPIHost=settings.ASTERISK_SERVER,
+	asteriskManAPIPort=settings.ASTERISK_MANAPI_PORT,
+	asteriskManAPIChannels=settings.ASTERISK_CHANNELS,
+	asteriskManAPIUsername=settings.ASTERISK_MANAPI_USERNAME,
+	asteriskManAPIPassword=settings.ASTERISK_MANAPI_PASSWORD)
 
 node.setupSMSSend(
 	kannelHost=settings.KANNEL_SERVER,

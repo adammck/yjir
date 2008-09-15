@@ -276,7 +276,7 @@ form {
 		width: 9em;
 		padding-right: 1em;
 		text-align: right;
-		margin-top: 0.4em;
+		margin-top: 0.5em;
 	}
 	
 		/* for small notes inside labels,
@@ -290,9 +290,7 @@ form {
 		}
 	
 	form input, form select, form textarea {
-		margin-right: 0.5em;
-		float: left;
-	}
+		float: left; }
 	
 		/* align the submit button(s) with
 		 * the fields, and space them out */
@@ -321,6 +319,21 @@ form {
 				list-style: disc;
 				color: #c00;
 			}
+	
+	/* */
+	form #recipients {
+		clear: none;
+		float: left;
+		padding: 0;
+	}
+	
+		form #recipients div {
+			padding: 0; }
+		
+		/* a little spacing between the
+		 * controls of the nested form */
+		form #recipients select {
+			margin-right: 0.25em; }
 
 
 

@@ -10,8 +10,8 @@ ADMINS = (
 MANAGERS = ADMINS
 
 DATABASE_ENGINE = 'sqlite3'
-#DATABASE_NAME   = '/home/adammck/Projects/Unicef/bee/dev.sqlite'
-DATABASE_NAME   = '/home/adam/yjir2/bee/dev.sqlite'
+DATABASE_NAME   = '/home/adammck/Projects/Unicef/yjir/frontend/bee/dev.sqlite'
+#DATABASE_NAME   = '/home/adam/yjir2/bee/dev.sqlite'
 
 # http://en.wikipedia.org/wiki/List_of_tz_zones_by_name
 TIME_ZONE = 'America/New_York'
