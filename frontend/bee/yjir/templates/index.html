@@ -108,8 +108,8 @@
 						{% for action in actions %}
 							<li>
 								<a href="/yjir/{{ this_scope.name }}/{{ this_keyword.name }}/{{ action.pk }}/edit">
-									{{ action }}
-									<span class="more">{{ action.payload|truncatewords:6 }}</span>
+									<div>{{ action }}</div>
+									<div class="more">{{ action.payload|truncatewords:10 }}</div>
 								</a>
 							</li>
 						{% endfor %}

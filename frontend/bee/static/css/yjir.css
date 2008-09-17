@@ -81,9 +81,9 @@ html.js div.with-js-hide {
 	
 	/* the middle column is slightly wider,
 	 * to equal exactly 100% width */
-	.column.scopes   { left: 0;   width: 33%; }
-	.column.keywords { left: 33%; width: 34%; }
-	.column.actions  { left: 67%; width: 33%; }
+	.column.scopes   { left: 0;   width: 28%; }
+	.column.keywords { left: 28%; width: 28%; }
+	.column.actions  { left: 56%; width: 44%; }
 	
 	/* users have been promoted to their
 	 * own page, so occupy the full width
@@ -174,8 +174,8 @@ html.js div.with-js-hide {
 					/* each item */
 					.column li a {
 						display: block;
-						line-height: 2;
-						padding: 0 0.5em;
+						padding: 0.5em;
+						line-height: 1;
 						border-top: 1px dotted #eee;
 						color: #000;
 					}
@@ -198,8 +198,10 @@ html.js div.with-js-hide {
 						
 						/* more information about this link
 						 * -- a little summary of the contents */
-						.column li a span.more {
-							color: #eee; }
+						.column li a div.more {
+							padding-top: 0.5em;
+							color: #ddd;
+						}
 					
 					/* the "edit this scope" link, which is only
 					 * added to the active scope/keyword/action */

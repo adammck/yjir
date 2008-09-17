@@ -151,14 +151,59 @@ def edit_action(req, scope_name, keyword_name, action_id):
 	sc = get_object_or_404(Scope, name=scope_name)
 	kw = get_object_or_404(Keyword, scope=sc, name=keyword_name)
 	ac = get_object_or_404(Action, keyword=kw, pk=action_id)
-	r = any_form(req, ActionForm, inst=ac, tmpl_data = { "recipients": range(10) })
 	
-	# if "save+test" were clicked, then simulate
-	# a kannel callback (to the backend.py)
-	if req.POST.has_key("submit") and req.POST["submit"] == "Submit + Test":
-		url = "http://localhost:%d/?callerid=%s&message=action+%d"\
-		      % (settings.KANNEL_PORT_RECEIVE, settings.TEST_NUMBER, int(action_id))
-		urllib.urlopen(url).read()
+	# fetch the destinations already attached to this
+	# action, and pad the array up to ten items (to help
+	# render the spare form fields without javascript)
+	dests = list(ac.destination_set.all())
+	show_others = True if len(dests) else False
+	if len(dests) < 10: dests.extend(range(10-len(dests)))
 
-	return r
+	
+	# actions are considerably more complicated
+	# than the other classes, so do some post-
+	# processing here	
+	if req.POST:
+	
+		# if "save+test" were clicked, then simulate
+		# a kannel callback (to the backend.py)
+		if req.POST.has_key("submit") and req.POST["submit"] == "Submit + Test":
+			url = "http://localhost:%d/?callerid=%s&message=action+%d"\
+				  % (settings.KANNEL_PORT_RECEIVE, settings.TEST_NUMBER, int(action_id))
+			urllib.urlopen(url).read()
+	
+		# arbitrary upper boundary
+		for n in range(10):
+	
+			# pluck out all relevant fields with blank
+			# defaults, to avoid raising KeyErrors
+			pk   = req.POST.get("recip_%d_pk"   % (n), "")
+			type = req.POST.get("recip_%d_type" % (n), "")
+			dest = req.POST.get("recip_%d_dest" % (n), "")
+			
+			# if a primary key was provided, then we are
+			# updating (or deleting!) an existing destination
+			if pk:
+				dest_obj = Destination.objects.get(pk=pk)
+			
+				if type and dest:
+					dest_obj.type = type
+					dest_obj.dest = dest
+					dest_obj.save()
+		
+				# if the destination was cleared, then
+				# destroy the object. just to keep the
+				# database tidy, really
+				else: dest_obj.delete()
+		
+			# no pk provided; if a type and destination
+			# were entered here, it's brand new in the db
+			elif type and dest:
+				Destination.objects.create(
+					action=ac,
+					type=type,
+					dest=dest)
+	
+	# finally, render the action form
+	return any_form(req, ActionForm, inst=ac, tmpl_data = { "recipients": dests, "show_others": show_others })
 

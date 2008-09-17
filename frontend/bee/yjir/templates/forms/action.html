@@ -10,16 +10,17 @@
 		{% if field.errors %}{{ field.errors }}{% endif %}
 	</div>{% endfor %}
 	
-	<div class="with-js-hide">
+	<div{% if not show_others %} class="with-js-hide"{% endif %}>
 		<label>Other Recipients</label>
 		<div id="recipients">{% for recipient in recipients %}
-			<div class="with-js-hide">
-				<select name="recip_type_{{ forloop.counter }}">
-					<option>SMS</option>
-					<option>Phone Call</option>
-					<option>Email</option>
+			<div{% if not recipient.dest %} class="with-js-hide"{% endif %}>{% if recipient.pk %}
+				<input type="hidden" name="recip_{{ forloop.counter }}_pk" value="{{ recipient.pk }}" />{% endif %}
+				<select name="recip_{{ forloop.counter }}_type">
+					<option{% ifequal recipient.type "sms" %} selected="selected"{% endifequal %} value="sms">SMS</option>
+					<option{% ifequal recipient.type "ivr" %} selected="selected"{% endifequal %} value="ivr">Phone Call</option>
+					<option{% ifequal recipient.type "email" %} selected="selected"{% endifequal %} value="email">Email</option>
 				</select>
-				<input type="text" name="recip_dest_{{ forloop.counter }}" />
+				<input type="text" name="recip_{{ forloop.counter }}_dest" value="{{ recipient.dest }}" />
 			</div>{% endfor %}
 		</div>
 	</div>

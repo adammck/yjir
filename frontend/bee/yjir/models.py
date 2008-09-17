@@ -8,6 +8,11 @@ REPLY_VIA = (
 	("sms", "SMS"),
 	("ivr", "Phone Call"))
 
+TYPES = (
+	("sms", "SMS"),
+	("ivr", "Phone Call"),
+	("email", "Email"))
+
 PROXYS = (
 	("", "None"),
 	("shell", "Shell Script"))
@@ -50,15 +55,18 @@ class Action(models.Model):
 	payload = models.TextField("Message")
 	
 	def __unicode__(self):
-		if self.reply_via != "":
-			return self.get_reply_via_display() + " to Sender"
+		# list all of the destinations,
+		# along with their bearer types
+		dests = self.destination_set.all()
+		dests = ["%s to %s" % (d.get_type_display(), d.dest) for d in dests]
 		
-		else:
-			# list all destinations as a comma-separated
-			# string, rather than \n as they are stored
-			dests = self.destination_set.all()
-			dests = ["%s to %s" % (d.type, d.dest) for d in dests]
-			return btd + ", ".join(dests)
+		# prepend the "x to Sender" if this
+		# action automatically replies
+		if self.reply_via != "":
+			via = self.get_reply_via_display()
+			dests.insert(0, "%s to Sender" % (via))
+		
+		return ", ".join(dests)
 	
 	# like Keyword, we must include other
 	# names in this url, to be RESTful
@@ -69,6 +77,6 @@ class Action(models.Model):
 
 class Destination(models.Model):
 	action = models.ForeignKey(Action)
-	type = models.CharField(max_length=5)
+	type = models.CharField(max_length=5, choices=TYPES)
 	dest = models.CharField(max_length=30)
 
