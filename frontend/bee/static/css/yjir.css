@@ -57,6 +57,14 @@ html.js div.with-js-hide {
 		
 		#header a {
 			color: #000; }
+	
+	#header form {
+		float: right;
+	}
+	
+		#header form .text {
+			margin-right: 0.5em;
+		}
 
 
 

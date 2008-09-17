@@ -6,6 +6,10 @@ from django.http import HttpResponse, HttpResponseRedirect
 from bee.yjir.models import *
 from bee.yjir.forms import *
 
+# for test button
+import bee.settings as settings
+import urllib
+
 
 
 
@@ -37,6 +41,24 @@ def dashboard(req, scope_name=None, keyword_name=None, action_id=None):
 				data["this_action"] = action
 	
 	return render_to_response("index.html", data)
+
+
+def backend_test(req):
+	if req.POST:
+		# forward the message to kannel, and just
+		# output the result as plain text (this is
+		# just for development, should be hidden)
+		msg = urllib.quote_plus(req.POST["msg"])
+		url = "http://localhost:%d/?callerid=%s&message=%s"\
+		      % (settings.KANNEL_PORT_RECEIVE, settings.TEST_NUMBER, msg)
+		result = urllib.urlopen(url).read()
+		return HttpResponse(result, mimetype="text/plain")
+		
+	else:
+		# this view should only be called via post,
+		# so throw an ugly error if we end up here
+		from django.http import HttpResponseNotAllowed
+		return HttpResponseNotAllowed(["POST"])
 
 
 
@@ -129,5 +151,14 @@ def edit_action(req, scope_name, keyword_name, action_id):
 	sc = get_object_or_404(Scope, name=scope_name)
 	kw = get_object_or_404(Keyword, scope=sc, name=keyword_name)
 	ac = get_object_or_404(Action, keyword=kw, pk=action_id)
-	return any_form(req, ActionForm, inst=ac, tmpl_data = { "recipients": range(10) })
+	r = any_form(req, ActionForm, inst=ac, tmpl_data = { "recipients": range(10) })
+	
+	# if "save+test" were clicked, then simulate
+	# a kannel callback (to the backend.py)
+	if req.POST.has_key("submit") and req.POST["submit"] == "Submit + Test":
+		url = "http://localhost:%d/?callerid=%s&message=action+%d"\
+		      % (settings.KANNEL_PORT_RECEIVE, settings.TEST_NUMBER, int(action_id))
+		urllib.urlopen(url).read()
+
+	return r
 

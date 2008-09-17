@@ -6,6 +6,9 @@ from bee.yjir.views import *
 
 urlpatterns = patterns("",
 	
+	# incomming message test
+	url(r'^backend-test$', backend_test, name="test"),
+	
     # scopes
     url(r'^add$',                      add_scope,  name="add-scope"),
     url(r'^(?P<scope_name>\w+)/edit$', edit_scope, name="edit-scope"),

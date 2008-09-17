@@ -15,6 +15,7 @@ sys.path.append("../frontend")
 # do the minimum possible work to
 # gain access to bee.yjir models
 from django.core.management import setup_environ
+from django.core.exceptions import ObjectDoesNotExist
 from bee import settings
 setup_environ(settings)
 from bee.yjir.models import *
@@ -22,57 +23,106 @@ from bee.yjir.models import *
 
 
 
+# these can be raised anywhere, to indicate that
+# the incoming SMS contained something invalid
+class YjirError(Exception): pass
+class InvalidKeyword(Exception): pass
+
+
 class RequestHandler(mobiled.application.SMSHandler):
-	def __init__(self):
-		
-		# maintain a single smtp
-		# server for this handler
-		self.smtp = smtplib.SMTP(
-			settings.EMAIL_SERVER)
-	
-	
 	def handleSMS(self, callerID, message, node):
 		
-		lmsg = message.lower()
+		lmsg = message.strip().lower()
 		print '<< SMS from "%s": %s'\
 		      % (callerID, lmsg)
 		
-		# fetch all actions for this scope + keyword
-		sc, kw = re.split('\s+', lmsg, 1)
-		acts = Action.objects.filter(
-			keyword__scope__name__iexact=sc,
-			keyword__name__iexact=kw)
+		# split the message into tokens
+		tok = re.split('\s+', lmsg)
 		
-		print "|| scope=\"%s\", keyword=\"%s\""\
-		      % (sc, kw)
 		
-		# abort if no actions were found
-		if not len(acts):
-			print "!! No actions"
-			return False
+		try:
 		
-		# temporarily, we are only replying,
-		# and ignoring other recipients
-		dests = [callerID]
+			# are we requesting a list of scopes?
+			if len(tok)==1 and tok[0]=="scopes":
+				self.send_scopes(node, callerID)
 		
-		# otherwise, iterate them, and pass
-		# each one to the appropriate handler
-		for act in acts:
+			# requesting a list of keywords within a scope?
+			elif len(tok)==2 and tok[1]=="keywords":
+				self.send_keywords(node, callerID, tok[0])
+		
+			# triggering an individual action? this is for
+			# the "submit and test" button in the frontend,
+			# but could be useful (but undocumented) elsewhere
+			elif len(tok)==2 and tok[0]=="action":
+				act = Action.objects.get(pk=tok[1])
+				print "## action=\"%s\"" % (act)
+				self.doAction(node, act, callerID)
+		
+			# == MOST "$SCOPE $KEYWORD" REQUESTS END UP HERE ==
+			elif len(tok) > 1:
+				
+				# fetch the scope and keyword (to ensure that
+				# they're both valid - a ObjectDoesNotExist exception
+				# is raised and caught otherwise), then fetch actions
+				sc = Scope.objects.get(name=tok[0])
+				kw = Keyword.objects.get(scope=sc, name=tok[1])
+				acts = Action.objects.filter(keyword=kw)
+				
+				print "## scope=\"%s\", keyword=\"%s\""\
+					  % (sc.name, kw.name)
+				
+				# no actions were found for this message, so
+				# respond to the caller with an unhelpful error
+				# todo: is this even necessary?
+				if not len(acts):
+					raise YjirError(
+						"Scope and Keyword were valid, " +
+						"but no Actions were found")
+				
+				# otherwise, iterate them, and pass
+				# each one to the appropriate handler
+				for act in acts:
+					self.doAction(node, callerID, act)
+				
+			# we couldn't figure out what the user wanted
+			else: raise YjirError("Invalid syntax")
+		
+		
+		# something went wrong during the request! we 
+		# must log it (to the console), and send an sms
+		# back to the caller (as not to leave them hanging)
+		except YjirError, e:
+			print "!! Caught Exception"
+			err = "YJIR Error: %s" % (str(e))
+			self.sendSMS(node, callerID, err)
+		
+		# this is a gigantic hack, because django's model
+		# exceptions kind of suck. when ObjectDoesNotExist
+		# is raised, no meta-information about WHAT wasn't
+		# found is included - so we must pluck it from the
+		# actual exception string (ie, "Scope matching query
+		# does not exist")
+		except ObjectDoesNotExist, e:
+			words = re.split('\s+', str(e))
+			klass = words[0]
 			
-			# always use the same arguments
-			args = [callerID, act, dests, node]
-			bt = act.reply_via
-			
-			# delegate each type of action to an
-			# instance method, or log an error
-			if   bt == 'sms': self.doSMS(*args)
-			elif bt == 'ivr': self.doIVR(*args)
-			else:             print "!! Unknown Bearer Type: %s" %(bt)
-			
-		# divide up the log
-		print "--"
+			# as above
+			print "!! %s Not Found" % (klass)
+			err = "YJIR Error: No such %s" % (klass)
+			self.sendSMS(node, callerID, err)
 		
+		
+		# divide up the console log
+		print "\n--\n"
 	
+	
+	
+	
+	## ====
+	## utility
+	## ====
+	
+	# just send an SMS. we do this all over the place
 	def sendSMS(self, node, to, msg):
 		
 		# create the sender, and find any available
@@ -85,80 +135,94 @@ class RequestHandler(mobiled.application.SMSHandler):
 		sender.sendMessage(msg, str(to))
 	
 	
-	def doSMS(self, callerID, act, dests, node):
-		for dest in dests: self.sendSMS(node, dest, act.payload)
 	
 	
-	def doEmail(self, callerID, act, dests, node):
+	
+	## ====
+	## wat
+	## ====
+
+	def send_scopes(self, node, to):
+		"""Send (via SMS) a list of all available Scopes"""
+		scopes = Scope.objects.values_list("name", flat=True)
+		msg = "Scopes: %s" % (", ".join(scopes))
+		self.sendSMS(node, to, msg)
+	
+	def send_keywords(self, node, to, scope_name):
+		"""Send (via SMS) a list of all Keywords within the named scope"""
+		sc = Scope.objects.get(name=scope_name)
+		keywords = Keyword.objects.filter(scope=sc).values_list("name", flat=True)
+		msg = "Keywords in \"%s\": %s" % (sc.name, ", ".join(keywords))
+		self.sendSMS(node, to, msg)
 		
-		# send a separate email to each destination
-		for dest in dests:
-			print ">> Email to \"%s\": %s"\
-			      % (dest, act.payload)
-			
-			# construct the email (in full), and send via smtplib
-			msg = "from: %s\r\nto: %s\r\nsubject: %s\r\n\r\n%s"\
-			      % (settings.EMAIL_FROM, dest, settings.EMAIL_SUBJECT, act.payload)
-			self.smtp.sendmail(settings.EMAIL_FROM, dest, msg)
 	
+	
+	
+	
+	## ====
+	## actions
+	## ====
+	
+	def doAction(self, node, callerID, act):
+				
+		# HACK HACK HACK HACK
+		# temporarily, we are only replying,
+		# and ignoring other recipients
+		dests = [callerID]
+
+		# always pass the same arguments
+		args = [callerID, act, dests, node]
+		bt = act.reply_via
+		
+		# delegate each type of action to an
+		# instance method, or log an error
+		if   bt == 'sms': self.doSMS(*args)
+		elif bt == 'ivr': self.doIVR(*args)
+		else: print "!! Unknown Bearer Type: %s" %(bt)
+	
+	
+	def doSMS(self, callerID, act, dests, node):
+		for dest in dests:
+			self.sendSMS(node, dest, act.payload)
 	
 	def doIVR(self, callerID, act, dests, node):
+		
+		# create the dialer, and find any available
+		# outgoing ivr service (better not forget
+		# the second line, or mobiled will fail
+		# cryptically with no useful error msg)
 		dialer = mobiled.ivr.IVRDialer(node)
+		dialer.getResource()
 		
 		# call each destination in order
 		for dest in dests:
 			print ">> Calling \"%s\": %s"\
 			      % (dest, act.payload)
 			
-			# dial the recipient, and
-			# wait for them to answer
-			ivr = dialer.dial(dest)
-			ivr.answer()
-			
-			# say the introduction and payload
-			ivr.say("Welcome to Why Jure")
-			ivr.getInput(1000)
-			ivr.say(act.payload)
-			
-			# outro, and hang up
-			ivr.getInput(2000)
-			ivr.say("Toodles")
-			ivr.hangup()
+			try:
+				# dial the recipient, and
+				# wait for them to answer
+				ivr = dialer.dial(dest)
+				ivr.answer()
 
-	
-	def doShell(self, callerID, act, dests, node):
-		
-		# remove carraige returns from the payload,
-		# because HTTP puts them in, and 
-		clean_payload = act.payload.replace("\r", "")
-		
-		# store the shell script into a temp file
-		filename = tempfile.mktemp()
-		tmp = open(filename, "w")
-		tmp.write(clean_payload)
-		tmp.close()
-		
-		# we will need to read + execute it
-		os.chmod(tmp.name, stat.S_IREAD | stat.S_IEXEC)
-		
-		# execute it once for each recipient,
-		# and send the results to each one
-		for dest in dests:
-			outp = Popen(["$0 $1", filename, dest], shell=True, stdout=PIPE).communicate()[0].strip()
-			print "|| Executing Shell Script for \"%s\": %s" % (dest, tmp.name)
-			self.sendSMS(node, dest, outp)
-		
-		# delete the temp file
-		os.remove(filename)
+				# say the introduction and payload
+				ivr.say("Welcome to Why Jure")
+				ivr.getInput(1000)
+				ivr.say(act.payload)
+				
+				# outro, and hang up
+				ivr.getInput(2000)
+				ivr.say("Toodles")
+				ivr.hangup()
+			
+			except OriginateFailed:	
+				print "!! Recipient didn't answer"
+
 
 
 
 # create the mobiled node, using the general handler
 node = mobiled.Mobiled(settings.MOBILED_UDP_PORT)
-
-node.setupIVRGeneral(
-	fastAGIPort=settings.ASTERISK_FASTAGI_PORT,
-	defaultTTS=settings.ASTERISK_DEFAULT_TTS)
 
 node.setupIVROutgoing(
 	asteriskManAPIHost=settings.ASTERISK_SERVER,
@@ -166,6 +230,10 @@ node.setupIVROutgoing(
 	asteriskManAPIChannels=settings.ASTERISK_CHANNELS,
 	asteriskManAPIUsername=settings.ASTERISK_MANAPI_USERNAME,
 	asteriskManAPIPassword=settings.ASTERISK_MANAPI_PASSWORD)
+
+node.setupIVRGeneral(
+	fastAGIPort=settings.ASTERISK_FASTAGI_PORT,
+	defaultTTS=settings.ASTERISK_DEFAULT_TTS)
 
 node.setupSMSSend(
 	kannelHost=settings.KANNEL_SERVER,
@@ -176,10 +244,10 @@ node.setupSMSSend(
 node.setupSMSReceive(
 	port=settings.KANNEL_PORT_RECEIVE)
 
-node.runApplication(RequestHandler)
 
 # start the app
 print "Starting Mobiled...",
+node.runApplication(RequestHandler)
 node.start()
 print "[done]"
 
@@ -197,24 +265,4 @@ try:
 # (to prevent mobiled from hanging)
 except KeyboardInterrupt:
 	os._exit(0)
-
-
-
-
-#def mobiledInit():
-#    """ Initializes mobiled; called from tgStartupInit() """
-#    from mobiled import Mobiled
-#    from yjir.mobiled_handlers import IncomingRequestHandler
-#    import config.mobiled_config as settings
-#    print 'creating mobiled node'
-#    mobiledNode = Mobiled(settings.MOBILED_UDP_PORT)
-#    print 'setting up mobiled node'
-#    mobiledNode.setupIVROutgoing(asteriskManAPIHost=settings.ASTERISK_SERVER, asteriskManAPIPort=settings.ASTERISK_MANAPI_PORT, asteriskManAPIChannels=settings.ASTERISK_CHANNELS, asteriskManAPIUsername=settings.ASTERISK_MANAPI_USERNAME, asteriskManAPIPassword=settings.ASTERISK_MANAPI_PASSWORD)
-#    mobiledNode.setupIVRGeneral(fastAGIPort=settings.ASTERISK_FASTAGI_PORT, defaultTTS=settings.ASTERISK_DEFAULT_TTS)
-#    mobiledNode.setupSMSReceive(port=settings.KANNEL_PORT_RECEIVE)
-#    mobiledNode.setupSMSSend(kannelHost=settings.KANNEL_SERVER, kannelPort=settings.KANNEL_PORT_SEND, kannelUsername=settings.KANNEL_USERNAME, kannelPassword=settings.KANNEL_PASSWORD)
-#    print 'running handler application'
-#    mobiledNode.runApplication( IncomingRequestHandler() )
-#    print 'starting node'
-#    mobiledNode.start()
 

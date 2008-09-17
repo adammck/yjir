@@ -10,8 +10,8 @@ ADMINS = (
 MANAGERS = ADMINS
 
 DATABASE_ENGINE = 'sqlite3'
-DATABASE_NAME   = '/home/adammck/Projects/Unicef/yjir/frontend/bee/dev.sqlite'
-#DATABASE_NAME   = '/home/adam/yjir2/bee/dev.sqlite'
+#DATABASE_NAME   = '/home/adammck/Projects/Unicef/yjir/frontend/bee/dev.sqlite'
+DATABASE_NAME   = '/home/adam/yjir2/frontend/bee/dev.sqlite'
 
 # http://en.wikipedia.org/wiki/List_of_tz_zones_by_name
 TIME_ZONE = 'America/New_York'
@@ -93,8 +93,8 @@ KANNEL_PASSWORD     = "mobiled"
 # ===============
 ASTERISK_SERVER          = "127.0.0.1"
 ASTERISK_MANAPI_PORT     = 5038 # management api port
-ASTERISK_MANAPI_USERNAME = "mobiled"
-ASTERISK_MANAPI_PASSWORD = "mobiled"
+ASTERISK_MANAPI_USERNAME = "yjir"
+ASTERISK_MANAPI_PASSWORD = "yjir"
 ASTERISK_FASTAGI_PORT    = 6500 # 
 ASTERISK_CHANNELS        = ["Zap/1"]
 ASTERISK_DEFAULT_TTS     = "swift"
@@ -104,4 +104,9 @@ ASTERISK_DEFAULT_TTS     = "swift"
 EMAIL_SERVER  = "localhost"
 EMAIL_FROM    = "no-reply@unicef.org"
 EMAIL_SUBJECT = "Message from YJIR"
+
+# OTHER STUFF
+# ===========
+TEST_NUMBER = "16464105122" # chris
+NO_ACTIONS_REPLY = "YJIR Error: Invalid Scope (%s) + Keyword (%s)"
 
