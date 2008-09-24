@@ -107,6 +107,8 @@ EMAIL_SUBJECT = "Message from YJIR"
 
 # OTHER STUFF
 # ===========
-TEST_NUMBER = "16464105122" # chris
+TEST_NUMBER = "16467444705" # adam
+#TEST_NUMBER = "16464105122" # chris
+#TEST_NUMBER = "19176051268" # chris #2
 NO_ACTIONS_REPLY = "YJIR Error: Invalid Scope (%s) + Keyword (%s)"
 

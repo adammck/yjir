@@ -9,6 +9,9 @@ urlpatterns = patterns("",
 	# incomming message test
 	url(r'^backend-test$', backend_test, name="test"),
 	
+	# web api (http post to it!)
+	url(r'api/(?P<scope_name>\w+)/(?P<keyword_name>\w+)', api, name="api"),
+	
     # scopes
     url(r'^add$',                      add_scope,  name="add-scope"),
     url(r'^(?P<scope_name>\w+)/edit$', edit_scope, name="edit-scope"),

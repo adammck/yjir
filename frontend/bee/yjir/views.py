@@ -61,6 +61,17 @@ def backend_test(req):
 		return HttpResponseNotAllowed(["POST"])
 
 
+def api(req, scope_name, keyword_name):
+	if req.POST:
+		pass
+	
+	else:
+		# the API is only available via POST, for now
+		from django.http import HttpResponseNotAllowed
+		return HttpResponseNotAllowed(["POST"])
+	
+
+
 
 
 def msg(msg, link):
