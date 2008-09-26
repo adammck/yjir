@@ -4,9 +4,9 @@ from django.db import models
 MAX_TOKEN_LENGTH = 10
 
 REPLY_VIA = (
-	("",    "None"),
-	("sms", "SMS"),
-	("ivr", "Phone Call"))
+	("none", "None"),
+	("sms",  "SMS"),
+	("ivr",  "Phone Call"))
 
 TYPES = (
 	("sms", "SMS"),
@@ -62,7 +62,7 @@ class Action(models.Model):
 		
 		# prepend the "x to Sender" if this
 		# action automatically replies
-		if self.reply_via != "":
+		if self.reply_via != "none":
 			via = self.get_reply_via_display()
 			dests.insert(0, "%s to Sender" % (via))
 		

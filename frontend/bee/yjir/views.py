@@ -176,16 +176,10 @@ def edit_action(req, scope_name, keyword_name, action_id):
 	# processing here	
 	if req.POST:
 	
-		# if "save+test" were clicked, then simulate
-		# a kannel callback (to the backend.py)
-		if req.POST.has_key("submit") and req.POST["submit"] == "Submit + Test":
-			url = "http://localhost:%d/?callerid=%s&message=action+%d"\
-				  % (settings.KANNEL_PORT_RECEIVE, settings.TEST_NUMBER, int(action_id))
-			urllib.urlopen(url).read()
-	
 		# arbitrary upper boundary
+		# for other destinations
 		for n in range(10):
-	
+			
 			# pluck out all relevant fields with blank
 			# defaults, to avoid raising KeyErrors
 			pk   = req.POST.get("recip_%d_pk"   % (n), "")
@@ -214,6 +208,13 @@ def edit_action(req, scope_name, keyword_name, action_id):
 					action=ac,
 					type=type,
 					dest=dest)
+	
+		# if "save+test" were clicked, then simulate
+		# a kannel callback (to the backend.py)
+		if req.POST.has_key("submit") and req.POST["submit"] == "Submit + Test":
+			url = "http://localhost:%d/?callerid=%s&message=action+%d"\
+				  % (settings.KANNEL_PORT_RECEIVE, settings.TEST_NUMBER, int(action_id))
+			urllib.urlopen(url).read()
 	
 	# finally, render the action form
 	return any_form(req, ActionForm, inst=ac, tmpl_data = { "recipients": dests, "show_others": show_others })

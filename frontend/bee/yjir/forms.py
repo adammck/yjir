@@ -26,18 +26,6 @@ class KeywordForm(ModelForm):
 
 
 
-# this field is especially for entering a list of
-# destination phone numbers into the action form
-class DestinationsField(fields.RegexField):
-	widget = widgets.Textarea(attrs = {"cols": 24, "rows": 3})
-	
-	default_error_messages = {
-		"invalid": "Destinations may only contain digits and newlines"}
-	
-	def __init__(self, *args, **kwargs):
-		super(DestinationsField, self).__init__(
-			re.compile(r'^[\d\r\n]+$'), *args, **kwargs)
-
 class ActionForm(ModelForm):
 	class Meta: model = Action
 	#destinations = DestinationsField()

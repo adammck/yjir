@@ -28,20 +28,48 @@
 	<script type="text/javascript">
 		window.addEvent ("domready", function() {
 			
+			/* add the remove button to each recipient row (we
+			 * don't do this in the tmpl, because if javascript
+			 * is disabled, the buttons will do nothing) */
+			$$("#recipients div").each(function(div) {
+				new Element("img", {
+					"src": "/static/png/process-stop.png",
+					"title": "Remove this Recipient",
+					"width": "16", "height": "16",
+					"class": "remove-row",
+					"events": {
+						"click": function(ev) {
+						
+							/* clear and hide the row */
+							div.getElement("select").selectedIndex = 0;
+							div.getElement("input[type=text]").value = "";
+							div.addClass("with-js-hide");
+							
+							/* if there are no rows left visible, hide the group */
+							var visible = $$("#recipients div.with-js-hide");
+							if (visible.length == 10) $("recipients").getParent().addClass("with-js-hide");
+							
+							/* rejig te lightbox */
+							window.fireEvent("resize");
+						}
+					}
+				}).inject(div);
+			});
+			
 			/* create a button to add another recipient field
 			 * via javascript (rather than in the tmpl), because
 			 * its dependant on JS. if JS is disabled, all of
 			 * the recipient fields are displayed */
 			var others = new Element("input", {
-				"type": "button",
 				"value": "Add Recipient",
+				"type": "button",
 				"events": {
 					"click": function() {
 						/* make sure the recipients group is visible */
 						$("recipients").getParent().removeClass("with-js-hide");
 						
-						/* reveal the next type/destination pair, if any
-						 * remain hidden */
+						/* reveal the next type/destination
+						 * row, if any still remain hidden */
 						var divs = $$("#recipients div.with-js-hide");
 						if (divs.length) divs[0].removeClass("with-js-hide");
 						
@@ -51,6 +79,7 @@
 					}
 				},
 				"styles": {
+					/* hide the button initially */
 					"position": "absolute",
 					"left": "-9999px"
 				}

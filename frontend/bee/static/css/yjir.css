@@ -22,12 +22,10 @@ html.js div.with-js-hide {
  * a bare-bones version ofthe page */
 .framed #header,
 .framed #footer {
-	display: none;
-}
+	display: none; }
 
 .framed body {
-	background: #eee;
-}
+	background: #eee; }
 
 
 
@@ -58,8 +56,11 @@ html.js div.with-js-hide {
 		#header a {
 			color: #000; }
 	
+	/* the test-text-message
+	 * form in the top right */
 	#header form {
 		float: right;
+		display: none;
 	}
 	
 		#header form .text {
@@ -167,9 +168,12 @@ html.js div.with-js-hide {
 				}
 				
 				/* each item's container */
-				.column li {
-					position: relative;
-				}
+				.column li { position: relative; }
+				
+				/* remove gaps between items in IE6 + IE7 -- see:
+				 * http://www.456bereastreet.com/archive/200610/closing_the_gap_between_list_items_in_ie/ */
+				#IE .column li {
+					display: inline; }
 				
 					/* each item */
 					.column li a {
@@ -190,6 +194,7 @@ html.js div.with-js-hide {
 						 * (IE6 doesn't support "dotted", so make it "solid" and lighten it
 						 * up a little to aproximate the effect) */
 						#IE .column ul li a {
+							cursor: pointer;
 							border-top-color: #f4f4f4;
 							border-top-style: expression(
 								window.MooTools && ($(this).getParent().getPrevious() == null) ? "none" : "solid"
@@ -343,7 +348,15 @@ form {
 		/* a little spacing between the
 		 * controls of the nested form */
 		form #recipients select {
-			margin-right: 0.25em; }
+			margin-right: 0.5em; }
+		
+		/* aproximately center the image in the
+		 * row (we have no idea how high the
+		 * input/select fields are) */
+		form #recipients img.remove-row {
+			margin: 0.25em 0 0 0.5em;
+			cursor: pointer;
+		}
 
 
 
@@ -374,7 +387,7 @@ div.message {
 /* if we have javascript support, then the
  * add/edit forms are loaded in a lightbox */
 iframe.dialog {
-	width: 40em;
+	width: 45em;
 	height: 20em;
 	border: 1px solid #ddd;
 	overflow: hidden;
@@ -384,6 +397,12 @@ iframe.dialog {
 	 * dialog - it's a confusing empty box */
 	iframe.dialog.loading {
 		visibility: hidden; }
+
+/* prevent IE6 from adding
+ * scrollbars to the body
+ * when the lightbox is visible */
+* html {
+	overflow: hidden; }
 
 
 
